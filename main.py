@@ -17,3 +17,7 @@ def hello():
 @app.get("/test/{params}")
 def hello(params):
     return {"message":"Hello From Financial Advisor!!" + params}
+
+@app.get("/new")
+def hello():
+    return {"message":"Newwwww"}
