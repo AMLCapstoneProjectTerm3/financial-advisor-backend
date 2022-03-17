@@ -35,7 +35,6 @@ class AuthDetails(BaseModel):
     
 @app.get("/")
 def hello():
-    print('ENviroment variables from server', os.environ['HASH_SECRET'])
     return 'Welcome to Financial Advisor API'
 
 #testing database connection to test collection at firestore
