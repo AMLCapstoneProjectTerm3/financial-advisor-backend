@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +35,7 @@ class AuthDetails(BaseModel):
     
 @app.get("/")
 def hello():
+    print('ENviroment variables from server', os.environ['HASH_SECRET'])
     return 'Welcome to Financial Advisor API'
 
 #testing database connection to test collection at firestore
