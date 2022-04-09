@@ -1,11 +1,11 @@
 from datetime import datetime
-import os
-from fastapi import FastAPI, Depends, HTTPException
+# import os
+from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from controller.prediction import generateRandomInputForModel,predictModel
 from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest, PredictRequest
-import numpy as np
+# import numpy as np
 from firebase import db
 from controller.auth import AuthHandler
 
