@@ -27,3 +27,8 @@ class BaseResponse(BaseModel):
     ResponseCode: int = Field(None)
     Data: dict = Field({})
     ErrorMessage: str = Field(None)
+    
+class PredictRequest(BaseModel):
+    riskLevel: int = Field(None)
+    stock: str = Field(None)
+    stockAmount: int = Field(None)
