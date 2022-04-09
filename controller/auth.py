@@ -5,6 +5,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 class AuthHandler():
     security = HTTPBearer()
