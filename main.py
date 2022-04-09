@@ -41,12 +41,35 @@ def tests():
     return docs
 
 @app.post("/predict")
-def predict(req: PredictRequest, username=Depends(auth_handler.auth_wrapper)):
+def predict(req: PredictRequest):
     res = BaseResponse()
     
-    print("request received", req)
+    print("request received", req.riskLevel)
+    print("request received", req.stock)
+    print("request received", req.stockAmount)
+    arr = []
+    arr.append(req.stock)
+    input_data = {
+        "investmentMoney": int(req.stockAmount),
+        "riskLevel": int(req.riskLevel),
+        "userSelectedStock": arr,
+        "daysOfPrediction": 60
+    }
+    
+    print("input created", input_data)
+    temp = predictModel(input_data)
+    
+    # print("temp received", temp)
+    print("temp received", temp)
+    # print("temp received", temp["previous_days"].tolist())
+    # print("temp received", type(temp["previous_days"]))
+    # print("temp received", type(temp["previous_days"].tolist()))
+    response = {
+        "previous_days_data": temp["previous_days_data"],
+        "predicted_days_data": temp["predicted_days_data"]
+    }
     res.Success = True
-    res.Data = req
+    res.Data = response
     return res
     # return {"data": str(predictModel(np.array(req.data))), "success": "True" }
         
