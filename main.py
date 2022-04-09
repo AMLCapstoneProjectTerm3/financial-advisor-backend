@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from controller.prediction import generateRandomInputForModel,predictModel
-from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest
+from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest, PredictRequest
 import numpy as np
 from firebase import db
 from controller.auth import AuthHandler
@@ -25,10 +25,6 @@ users = []
 
 testdb = db.collection("test")
 usersdb = db.collection("users")
-
-class PredictRequest(BaseModel):
-    data: list = None
-    
 class AuthDetails(BaseModel):
     username: str
     password: str
@@ -45,8 +41,14 @@ def tests():
     return docs
 
 @app.post("/predict")
-def predict(req: PredictRequest):
-    return {"data": str(predictModel(np.array(req.data))), "success": "True" }
+def predict(req: PredictRequest, username=Depends(auth_handler.auth_wrapper)):
+    res = BaseResponse()
+    
+    print("request received", req)
+    res.Success = True
+    res.Data = req
+    return res
+    # return {"data": str(predictModel(np.array(req.data))), "success": "True" }
         
 @app.get("/predictRandom")
 def predictRandom():
