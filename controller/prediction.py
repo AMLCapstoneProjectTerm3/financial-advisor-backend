@@ -1,6 +1,6 @@
 # import libraries
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import yfinance as yf
 import datetime
 import itertools
@@ -9,10 +9,10 @@ from sklearn.preprocessing import MinMaxScaler
 from itertools import chain
 
 ### Tensorflow libraries
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.models import load_model
+# from tensorflow.keras.layers import Dense
+# from tensorflow.keras.layers import LSTM
+# from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 SP_STOCK_CODE = '^GSPC'
