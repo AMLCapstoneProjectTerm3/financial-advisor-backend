@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from controller.prediction import generateRandomInputForModel,predictModel
-from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest
+from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest, PredictRequest
 import numpy as np
 from firebase import db
 from controller.auth import AuthHandler
@@ -25,10 +25,6 @@ users = []
 
 testdb = db.collection("test")
 usersdb = db.collection("users")
-
-class PredictRequest(BaseModel):
-    data: list = None
-    
 class AuthDetails(BaseModel):
     username: str
     password: str
@@ -46,7 +42,36 @@ def tests():
 
 @app.post("/predict")
 def predict(req: PredictRequest):
-    return {"data": str(predictModel(np.array(req.data))), "success": "True" }
+    res = BaseResponse()
+    
+    print("request received", req.riskLevel)
+    print("request received", req.stock)
+    print("request received", req.stockAmount)
+    arr = []
+    arr.append(req.stock)
+    input_data = {
+        "investmentMoney": int(req.stockAmount),
+        "riskLevel": int(req.riskLevel),
+        "userSelectedStock": arr,
+        "daysOfPrediction": 60
+    }
+    
+    print("input created", input_data)
+    temp = predictModel(input_data)
+    
+    # print("temp received", temp)
+    print("temp received", temp)
+    # print("temp received", temp["previous_days"].tolist())
+    # print("temp received", type(temp["previous_days"]))
+    # print("temp received", type(temp["previous_days"].tolist()))
+    response = {
+        "previous_days_data": temp["previous_days_data"],
+        "predicted_days_data": temp["predicted_days_data"]
+    }
+    res.Success = True
+    res.Data = response
+    return res
+    # return {"data": str(predictModel(np.array(req.data))), "success": "True" }
         
 @app.get("/predictRandom")
 def predictRandom():
@@ -138,3 +163,38 @@ def login(req: LoginRequest):
 @app.get('/protected')
 def protected(username=Depends(auth_handler.auth_wrapper)):
     return { 'name': username }
+
+@app.get("/userdetails")
+async def userdetails(username=Depends(auth_handler.auth_wrapper)):
+    res = BaseResponse()
+    if(username):    
+        print("Getting user details for username: " + str(username))
+        doc_ref = usersdb.document(username)
+        doc = doc_ref.get()
+        print(doc)
+        print(doc.exists)
+        if doc.exists:
+            print("doc exists")
+            doc = doc.to_dict();
+            print(doc)
+            res.Success = True;
+            res.Data = {
+                "email": doc['email'],
+                "displayName": doc['firstname'] + " " + doc['lastname'],
+                "date_created": doc['date_created']
+            }
+            
+            print(res)
+            return res;
+        else:
+            res.Success = True
+            res.ErrorMessage = "No user details found"
+            res.Data = {}
+            
+            return res;
+    else:
+        res.Success = False
+        res.ErrorMessage = "User not Found please try again"
+        res.Data = {}
+        
+        return res;
