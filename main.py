@@ -138,3 +138,38 @@ def login(req: LoginRequest):
 @app.get('/protected')
 def protected(username=Depends(auth_handler.auth_wrapper)):
     return { 'name': username }
+
+@app.get("/userdetails")
+async def userdetails(username=Depends(auth_handler.auth_wrapper)):
+    res = BaseResponse()
+    if(username):    
+        print("Getting user details for username: " + str(username))
+        doc_ref = usersdb.document(username)
+        doc = doc_ref.get()
+        print(doc)
+        print(doc.exists)
+        if doc.exists:
+            print("doc exists")
+            doc = doc.to_dict();
+            print(doc)
+            res.Success = True;
+            res.Data = {
+                "email": doc['email'],
+                "displayName": doc['firstname'] + " " + doc['lastname'],
+                "date_created": doc['date_created']
+            }
+            
+            print(res)
+            return res;
+        else:
+            res.Success = True
+            res.ErrorMessage = "No user details found"
+            res.Data = {}
+            
+            return res;
+    else:
+        res.Success = False
+        res.ErrorMessage = "User not Found please try again"
+        res.Data = {}
+        
+        return res;
