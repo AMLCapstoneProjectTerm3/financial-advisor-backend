@@ -40,6 +40,20 @@ def tests():
     docs = [x.to_dict() for x in docs]
     return docs
 
+
+# @app.post("/stocksOnRisk")
+# def predict(req: PredictRequest):
+#     res = BaseResponse()
+#     input_data = {
+#         "investmentMoney": int(req.stockAmount),
+#         "riskLevel": int(req.riskLevel),
+#         "userSelectedStock": req.stock,
+#         "daysOfPrediction": 60
+#     }
+
+#     getStocksBasedOnRisk(inp)
+
+
 @app.post("/predict")
 def predict(req: PredictRequest):
     res = BaseResponse()
@@ -47,29 +61,32 @@ def predict(req: PredictRequest):
     print("request received", req.riskLevel)
     print("request received", req.stock)
     print("request received", req.stockAmount)
-    arr = []
-    arr.append(req.stock)
+    # arr = []
+    # arr.append(req.stock)
     input_data = {
         "investmentMoney": int(req.stockAmount),
         "riskLevel": int(req.riskLevel),
-        "userSelectedStock": arr,
-        "daysOfPrediction": 60
+        "userSelectedStock": req.stock,
+        "daysOfPrediction": 1000
     }
     
-    print("input created", input_data)
+    # print("input created", input_data)
     temp = predictModel(input_data)
+    # temp = predictFromFB(input_data)
     
     # print("temp received", temp)
-    print("temp received", temp)
+    # print("temp received", temp)
     # print("temp received", temp["previous_days"].tolist())
     # print("temp received", type(temp["previous_days"]))
     # print("temp received", type(temp["previous_days"].tolist()))
     response = {
+        "original_data": temp["original_data"],
         "previous_days_data": temp["previous_days_data"],
         "predicted_days_data": temp["predicted_days_data"]
     }
     res.Success = True
     res.Data = response
+    # res.Data = None
     return res
     # return {"data": str(predictModel(np.array(req.data))), "success": "True" }
         

@@ -15,6 +15,10 @@ from tensorflow.keras.layers import LSTM
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
+# fb prophet libraries
+# from fbprophet import Prophet
+
+
 SP_STOCK_CODE = '^GSPC'
 STOCK_NAME_CODE_MAP = {
     '^GSPC': 'S&P 500',
@@ -40,6 +44,8 @@ STOCK_NAME_CODE_MAP = {
     'MSFT': 'Microsoft Corporation',
     'SPG': 'Simon Property Group, Inc.'
 }
+# STOCKS_CURRENT_PRICE = {}
+STOCKS_CURRENT_PRICE = {'^GSPC': 4392.59, 'AAPL': 165.29, 'AMZN': 3034.13, 'AMT': 255.54, 'XOM': 87.83, 'CVX': 171.59, 'SHW': 252.9, 'DD': 68.7, 'BA': 181.94, 'UNP': 246.21, 'DUK': 114.85, 'ED': 98.03, 'AEP': 102.04, 'UNH': 534.82, 'JNJ': 179.9, 'BRK-A': 516435, 'JPM': 126.12, 'MCD': 250.51, 'KO': 65.02, 'PG': 158.57, 'MSFT': 279.83, 'SPG': 127.88}
 STOCK_CODES = ' '.join(list(STOCK_NAME_CODE_MAP.keys()))
 START_DATE = '1997-05-24' #From this date, yahoo finance has the data listed
 END_DATE = str(datetime.datetime.today()).split()[0] # current date
@@ -51,7 +57,7 @@ TEST_DATA = None
 BETA_VALUES = None
 TIME_STEPS = 100
 
-MODEL = load_model("./models/financial_ad_model.h5")
+MODEL = load_model("./models/NEW^GSPC.h5")
 
 
 
@@ -65,7 +71,10 @@ MODEL = load_model("./models/financial_ad_model.h5")
 def download_data(stockCode, startDate, endDate):
   # Read data 
   datasetDF = yf.download(stockCode,startDate,endDate)
+  # print(datasetDF)
   datasetDF = datasetDF["Adj Close"]
+  # print("---------original data-----------")
+  # print(datasetDF)
   return datasetDF
 
 
@@ -118,13 +127,22 @@ def split_dateset(df):
   return train_data, test_data
 
 
+def download_stocks_current_price():
+  global STOCKS_CURRENT_PRICE
+  for stock_code in STOCK_NAME_CODE_MAP.keys():
+    print('getting price for stock: ', stock_code)
+    STOCKS_CURRENT_PRICE[stock_code] = yf.Ticker(stock_code).info['regularMarketPrice']
+  
+  print(STOCKS_CURRENT_PRICE)
+
+
 def get_test_data():
     global TIME_STEPS, SP_STOCK_CODE, START_DATE, END_DATE, SCALER, TEST_DATA, TEST_DF
     #download S&P data
     df = download_data(SP_STOCK_CODE, START_DATE, END_DATE)
 
     df = pre_process_data(df)
-    df = df.rolling(TIME_STEPS).mean()[TIME_STEPS-1:]
+    # df = df.rolling(TIME_STEPS).mean()[TIME_STEPS-1:]
 
     ### LSTM are sensitive to the scale of the data. so we apply MinMax scaler
     SCALER=MinMaxScaler(feature_range=(0,1))
@@ -134,6 +152,11 @@ def get_test_data():
 
     TEST_DATA = test_data
     TEST_DF = df
+
+    # print("------------train data-----------")
+    # print(train_data)
+    # print("--------------------test data--------")
+    # print(test_data)
     # return test_data
 
 
@@ -144,14 +167,21 @@ def initialize():
     #1 Download data from yahoo finance
     df = download_data(STOCK_CODES, START_DATE, END_DATE)
 
+    # download_stocks_current_price()
+
     #2 Pre-process data
     df = pre_process_data(df)
     
     # store df to global
     DF = df
+    # print("-----------DF after pre-processing-----------")
+    # print(DF)
 
     #3 find beta value of each stocks
     BETA_VALUES = get_beta_values(df, SP_STOCK_CODE)
+
+    # print("-----------------df after beta values----------")
+    # print(df)
 
     get_test_data()
     #4 store test data for prediction
@@ -213,10 +243,26 @@ def getStocksBasedOnRisk(inp):
 
         n = round(math.log(money,10))
         list_sorted_corr = list(set([item for t in list(dict_sorted_corr.keys()) for item in t]))[0:n]
-        print(list_sorted_corr)
+        # print(list_sorted_corr)
         return list_sorted_corr
 
 initialize()
+
+
+def get_stocks_future_data(stock_code, predicted_data):
+  predicted_data_df = pd.DataFrame(predicted_data)
+  daily_change = predicted_data_df.pct_change().values.tolist()[1:]
+  daily_change_lst = [i[0] for i in daily_change]
+
+  price = STOCKS_CURRENT_PRICE[stock_code]
+  beta_value = BETA_VALUES[stock_code]
+
+  stock_predicted_values = []
+  for daily in daily_change_lst:
+    stock_predicted_values.append(price + (daily * beta_value * price * 100))
+  
+  return stock_predicted_values
+
 
 def predictModel(inp):
     global TEST_DATA, TIME_STEPS, TEST_DF, MODEL, SCALER, SP_STOCK_CODE
@@ -226,7 +272,7 @@ def predictModel(inp):
     userData = {
         'investmentMoney': inp['investmentMoney'],
         'riskLevel': inp['riskLevel'],
-        'stocks': inp['userSelectedStock'],
+        'stock': inp['userSelectedStock'],
         'daysOfPrediction': inp['daysOfPrediction']
     }
 
@@ -257,11 +303,14 @@ def predictModel(inp):
     day_new=np.arange(1, TIME_STEPS + 1)
     day_pred=np.arange(TIME_STEPS + 1, TIME_STEPS + userData['daysOfPrediction'] + 1)
 
+    stock_predicted_values = get_stocks_future_data(userData['stock'], lst_output)
+    print(stock_predicted_values)
     returnObj = {
+        "original_data": DF[userData['stock']].reset_index().values.tolist(),
         "previous_days": day_new,
         "previous_days_data": list(chain.from_iterable(scaler.inverse_transform(df[len(df)-TIME_STEPS:]))),
         "predicted_days": day_pred,
-        "predicted_days_data": list(chain.from_iterable(scaler.inverse_transform(lst_output)))
+        "predicted_days_data": stock_predicted_values #list(chain.from_iterable(scaler.inverse_transform(lst_output)))
     }
     # print(returnObj)
     return returnObj
@@ -271,3 +320,23 @@ def predictModel(inp):
     #     return model.predict(inp)[0][0]
     # except :
     #     return "System Error: Could not predict"
+
+
+
+def predictFromFB(inp):
+  userData = {
+      'investmentMoney': inp['investmentMoney'],
+      'riskLevel': inp['riskLevel'],
+      'stock': inp['userSelectedStock'],
+      'daysOfPrediction': inp['daysOfPrediction']
+  }
+
+  df = download_data(SP_STOCK_CODE, START_DATE, END_DATE)
+  df = pre_process_data(df)
+  print(len(df))
+
+  fbp = Prophet(daily_seasonality=True)
+  fbp.fit(df)
+  future = fbp.make_future_dataframe(periods=365)
+  forecast = fbp.predict(future)
+  print(len(forecast))
