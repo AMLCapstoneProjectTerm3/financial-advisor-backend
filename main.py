@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from controller.prediction import generateRandomInputForModel,predictModel
-from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest, PredictRequest
+from controller.prediction import generateRandomInputForModel,predictModel, getStocksBasedOnRisk
+from models.schemas import BaseResponse, User, RegisterRequest, LoginRequest, PredictRequest, StocksOnRiskLevelRequest
 # import numpy as np
 from firebase import db
 from controller.auth import AuthHandler
@@ -41,44 +41,44 @@ def tests():
     return docs
 
 
-# @app.post("/stocksOnRisk")
-# def predict(req: PredictRequest):
-#     res = BaseResponse()
-#     input_data = {
-#         "investmentMoney": int(req.stockAmount),
-#         "riskLevel": int(req.riskLevel),
-#         "userSelectedStock": req.stock,
-#         "daysOfPrediction": 60
-#     }
+@app.post("/stocksOnRisk")
+def stocksOnRiskLevel(req: StocksOnRiskLevelRequest):
+    res = BaseResponse()
 
-#     getStocksBasedOnRisk(inp)
+    # input_data = {
+    #     "investmentAmount": 1000,
+    #     "riskLevel": 1
+    # }
+
+    input_data = {
+        "investmentAmount": int(req.investmentAmount),
+        "riskLevel": int(req.riskLevel)
+    }
+
+    stocksList = getStocksBasedOnRisk(input_data)
+    return {"stocksList": stocksList}
 
 
 @app.post("/predict")
 def predict(req: PredictRequest):
     res = BaseResponse()
     
-    print("request received", req.riskLevel)
-    print("request received", req.stock)
-    print("request received", req.stockAmount)
+    print("---------------Predict request received---------------")
+    print("risk level: ", req.riskLevel)
+    print("user selected stock: ", req.stock)
+    print("user's investment amount: ", req.stockAmount)
+    print("days to be predicted: ", req.daysToBePredicted)
     # arr = []
     # arr.append(req.stock)
     input_data = {
         "investmentMoney": int(req.stockAmount),
         "riskLevel": int(req.riskLevel),
         "userSelectedStock": req.stock,
-        "daysOfPrediction": 1000
+        "daysOfPrediction": req.daysToBePredicted
     }
     
-    # print("input created", input_data)
     temp = predictModel(input_data)
-    # temp = predictFromFB(input_data)
     
-    # print("temp received", temp)
-    # print("temp received", temp)
-    # print("temp received", temp["previous_days"].tolist())
-    # print("temp received", type(temp["previous_days"]))
-    # print("temp received", type(temp["previous_days"].tolist()))
     response = {
         "original_data": temp["original_data"],
         "previous_days_data": temp["previous_days_data"],
@@ -86,9 +86,8 @@ def predict(req: PredictRequest):
     }
     res.Success = True
     res.Data = response
-    # res.Data = None
     return res
-    # return {"data": str(predictModel(np.array(req.data))), "success": "True" }
+
         
 @app.get("/predictRandom")
 def predictRandom():

@@ -44,8 +44,8 @@ STOCK_NAME_CODE_MAP = {
     'MSFT': 'Microsoft Corporation',
     'SPG': 'Simon Property Group, Inc.'
 }
-# STOCKS_CURRENT_PRICE = {}
-STOCKS_CURRENT_PRICE = {'^GSPC': 4392.59, 'AAPL': 165.29, 'AMZN': 3034.13, 'AMT': 255.54, 'XOM': 87.83, 'CVX': 171.59, 'SHW': 252.9, 'DD': 68.7, 'BA': 181.94, 'UNP': 246.21, 'DUK': 114.85, 'ED': 98.03, 'AEP': 102.04, 'UNH': 534.82, 'JNJ': 179.9, 'BRK-A': 516435, 'JPM': 126.12, 'MCD': 250.51, 'KO': 65.02, 'PG': 158.57, 'MSFT': 279.83, 'SPG': 127.88}
+STOCKS_CURRENT_PRICE = {}
+# {'^GSPC': 4271.78, 'AAPL': 161.79, 'AMZN': 2887, 'AMT': 261.9, 'XOM': 85.13, 'CVX': 160.95, 'SHW': 244.92, 'DD': 67.29, 'BA': 176.92, 'UNP': 234.3, 'DUK': 114.28, 'ED': 96.49, 'AEP': 100.25, 'UNH': 520.94, 'JNJ': 181.54, 'BRK-A': 505440, 'JPM': 126.81, 'MCD': 250.17, 'KO': 65.25, 'PG': 161.25, 'MSFT': 274.03, 'SPG': 125.88}
 STOCK_CODES = ' '.join(list(STOCK_NAME_CODE_MAP.keys()))
 START_DATE = '1997-05-24' #From this date, yahoo finance has the data listed
 END_DATE = str(datetime.datetime.today()).split()[0] # current date
@@ -167,7 +167,7 @@ def initialize():
     #1 Download data from yahoo finance
     df = download_data(STOCK_CODES, START_DATE, END_DATE)
 
-    # download_stocks_current_price()
+    download_stocks_current_price()
 
     #2 Pre-process data
     df = pre_process_data(df)
@@ -223,7 +223,7 @@ def getStocksBasedOnRisk(inp):
     # riskLevel = 'medium' #input(('What risk level you would prefer [High, medium, low]. Hint: High risk increase the changes of return, but also increase the chances of risk: '))
     # riskLevelInt = riskLevelMap.get(riskLevel.lower().strip(), None)
 
-    money = inp['investmentMoney']
+    money = inp['investmentAmount']
     riskLevelInt = inp['riskLevel']
 
     if( riskLevelInt and money):

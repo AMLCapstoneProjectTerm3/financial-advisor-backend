@@ -32,3 +32,8 @@ class PredictRequest(BaseModel):
     riskLevel: int = Field(None)
     stock: str = Field(None)
     stockAmount: int = Field(None)
+    daysToBePredicted: int = Field(None)
+
+class StocksOnRiskLevelRequest(BaseModel):
+    investmentAmount: int = Field(None)
+    riskLevel: int = Field(None)
